@@ -36,4 +36,5 @@ var DISCOUNTS = {
   "d7a1703168baee4ace6b356a7676f422afc9795e6ae5e44f0bea4bb4ef517e79": { type: "fixed", amount: 20, min: 500,  note: "滿500折20" },
   "72ce819a757519ffdfbdde580e8a4866c70804f8477ef4c8f69377c79883dec5": { type: "fixed", amount: 50, min: 1000, note: "滿1000折50" },
   "2b09bb2cb1e8bc4b40a3430b230e2cb08f0e21d8c706baba7472ad6a762454b6": { type: "fixed", amount: 20, min: 500, start: "2026-10-27", end: "2026-12-31", note: "滿500折20" },
+  "e99ae8181f5db5c60517366bd14a3d05b90bea740ec2910aee9a9848916cf86b": { type: "fixed", amount: 50, min: 1000, start: "2026-10-27", end: "2026-12-31", note: "滿1000折50" }
 };
