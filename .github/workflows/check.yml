@@ -1,0 +1,21 @@
+name: 資料檢查
+
+# 每次推送或發 PR 都檢查 stock.js / discounts.js / 商品資料是否一致
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: 檢查資料一致性
+        run: node scripts/check-data.js
