@@ -1,0 +1,51 @@
+# 【選用】檢查通過才部署到 GitHub Pages
+# 使用方式：
+#   1. 把這個檔案移到 .github/workflows/deploy-pages.yml
+#   2. 到倉庫 Settings → Pages → Build and deployment → Source 改成「GitHub Actions」
+#   3. 之後只有檢查通過的版本才會上線（檢查失敗就不會更新網站）
+name: 檢查後部署到 Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node scripts/check-data.js
+
+  deploy:
+    needs: check
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: 只打包網站需要的檔案（不含腳本與設定）
+        run: |
+          mkdir _site
+          rsync -a ./ _site/ \
+            --exclude '.git' --exclude '.github' --exclude '_site' \
+            --exclude 'scripts' --exclude 'node_modules' --exclude '*.md'
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4
