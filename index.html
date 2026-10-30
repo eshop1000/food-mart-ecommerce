@@ -170,7 +170,7 @@ function rng(o){var a=md(o.start),b=md(o.end);return a&&b?a+"–"+b:b?"至 "+b:a
 function bar(){var t=today(),h="";(typeof PROMOS!=="undefined"&&PROMOS?PROMOS:[]).forEach(function(p){
   if(!p||p.enabled===false||(p.start&&t<p.start)||(p.end&&t>p.end))return;
   var sc=[].concat(p.categories||[],(p.items&&p.items.length)?[p.items.length+" 項商品"]:[]).join("、"),ttl=p.title||(sc+" "+(p.label||"")),r=rng(p);
-  h+='<div>🏷️ <b>'+ttl+'</b>'+(r?'<span>'+r+'</span>':'')+'</div>'});return h}
+  h+='<div>🏷️ <b>'+ttl+'</b>'+(r?'<span>特價期間：'+r+'</span>':'')+'</div>'});return h}
 function eligible(rule){
   var scoped=(rule.categories&&rule.categories.length)||(rule.items&&rule.items.length),s=0;
   P.forEach(function(x){var q=C[x.id]||0;if(!q)return;var ok=true;
@@ -178,7 +178,7 @@ function eligible(rule){
     if(ok)s+=q*unit(x)});
   return s}
 function calc(){
-  var sub=0,pr=0,pn=0,lb=[],lf=[];P.forEach(function(x){var q=C[x.id]||0;if(!q)return;sub+=q*x.p;var o=promoOf(x);if(o){pr+=q*o.amt;pn+=q;if(lb.indexOf(o.label)<0)lb.push(o.label);var f=o.label+(rng(o)?"，"+rng(o):"");if(lf.indexOf(f)<0)lf.push(f)}});
+  var sub=0,pr=0,pn=0,lb=[],lf=[];P.forEach(function(x){var q=C[x.id]||0;if(!q)return;sub+=q*x.p;var o=promoOf(x);if(o){pr+=q*o.amt;pn+=q;if(lb.indexOf(o.label)<0)lb.push(o.label);var f=o.label+(rng(o)?"，特價期間："+rng(o):"");if(lf.indexOf(f)<0)lf.push(f)}});
   var r={sub:sub,promo:pr,pn:pn,plabel:lb.join("、"),plabelF:lf.join("；"),net:sub-pr,off:0,code:"",msg:"",ok:false};
   if(!applied)return r;
   var rule=findRule(applied);r.code=DKEY[applied]||applied;
@@ -202,7 +202,7 @@ function draw(){
   P.forEach(function(x){var st=stockOf(x);if(st!==Infinity&&(C[x.id]||0)>st)C[x.id]=st});
   $("tabs").innerHTML=TABS.map(function(t){return '<button data-cat="'+t+'"'+(t===cat?' class="on"':'')+'>'+t+'<i>'+P.filter(function(x){return inCat(x,t)}).length+'</i></button>'}).join("");
   $("grid").innerHTML=P.filter(function(x){return inCat(x,cat)&&x.n.toLowerCase().indexOf(kw)>-1}).sort(function(a,b){return (stockOf(a)<=0)-(stockOf(b)<=0)}).map(function(x){var q=C[x.id]||0,st=stockOf(x),out=st<=0,pm=out?null:promoOf(x),sb=out?'已售完':(st<=5?'只剩 '+st+' 件':''),badge=(sb?'<span class="badge'+(out?'':' low')+(pm?' stk':'')+'">'+sb+'</span>':'')+(pm?'<span class="badge promo">'+pm.label+'</span>':'');
-    return '<div class="card'+(q?' on':'')+(out?' out':'')+'"><div class="imgwrap"><img src="'+x.i+'" alt="'+x.n+'" decoding="async">'+badge+'</div><div class="info"><div class="name">'+x.n+'</div><div class="price">'+(pm?'<span class="was"><s>NT$ '+x.p+'</s>'+(rng(pm)?'<em>'+rng(pm)+'</em>':'')+'</span>':'')+'<small>NT$</small>'+(x.p-(pm?pm.amt:0))+'</div>'+
+    return '<div class="card'+(q?' on':'')+(out?' out':'')+'"><div class="imgwrap"><img src="'+x.i+'" alt="'+x.n+'" decoding="async">'+badge+'</div><div class="info"><div class="name">'+x.n+'</div><div class="price">'+(pm?'<span class="was"><s>NT$ '+x.p+'</s>'+(rng(pm)?'<em>特價期間：'+rng(pm)+'</em>':'')+'</span>':'')+'<small>NT$</small>'+(x.p-(pm?pm.amt:0))+'</div>'+
     (out?'<button class="add" disabled>已售完</button>':q?'<div class="qty"><button data-d="-1" data-id="'+x.id+'">−</button><span>'+q+'</span><button data-d="1" data-id="'+x.id+'"'+(q>=st?' disabled':'')+'>+</button></div>'
       :'<button class="add" data-d="1" data-id="'+x.id+'">加入購物車</button>')+'</div></div>'}).join("")||'<div class="empty">找不到符合的商品</div>';
   var n=0,s=0;P.forEach(function(x){var q=C[x.id]||0;n+=q;s+=q*unit(x)});
@@ -222,7 +222,7 @@ function text(){
 function sheet(){
   $("lines").innerHTML=P.filter(function(x){return C[x.id]}).map(function(x){var q=C[x.id],o=promoOf(x);
     if(!o)return '<div class="row"><span>'+x.n+' ×'+q+'</span><span>NT$'+q*x.p+'</span></div>';
-    return '<div class="row"><span>'+x.n+' ×'+q+'<span class="tag">'+o.label+'</span><small>NT$'+x.p+' → NT$'+(x.p-o.amt)+'，共省 NT$'+q*o.amt+(rng(o)?'（優惠 '+rng(o)+'）':'')+'</small></span><span><s>NT$'+q*x.p+'</s>NT$'+q*(x.p-o.amt)+'</span></div>'}).join("");
+    return '<div class="row"><span>'+x.n+' ×'+q+'<span class="tag">'+o.label+'</span><small>NT$'+x.p+' → NT$'+(x.p-o.amt)+'，共省 NT$'+q*o.amt+(rng(o)?'（特價期間：'+rng(o)+'）':'')+'</small></span><span><s>NT$'+q*x.p+'</s>NT$'+q*(x.p-o.amt)+'</span></div>'}).join("");
   var r=calc(),hp=r.promo>0;
   $("sub").textContent="NT$"+r.sub;$("subLabel").textContent=hp?"小計（原價）":"小計";$("subRow").style.display=(hp||r.ok)?"flex":"none";
   $("promoRow").style.display=hp?"flex":"none";$("promoLabel").textContent="促銷折扣（"+r.plabel+"，共 "+r.pn+" 件）";$("promoAmt").textContent="−NT$"+r.promo;
