@@ -234,6 +234,43 @@ function checkDiscounts(P, TABS) {
     if (exists(f)) err(`不應放進公開倉庫的檔案：${f}（內含或可產生折扣碼明碼）`);
 }
 
+
+let d0 = null; // 商品資料（供促銷比對分類用）
+function matchCat(x, t, d) {
+  const CAT = d.CAT || {}, ALSO = d.ALSO || {};
+  return t === '全部' || CAT[x.id] === t || (t === '王品' && x.n.startsWith('王品')) || (ALSO[x.id] || []).includes(t);
+}
+
+// ---------- 檢查：促銷 ----------
+function checkPromos(P, TABS) {
+  if (!exists('promos.js')) return;
+  let PR;
+  try { PR = runVarsFile('promos.js', ['PROMOS']).PROMOS; } catch (e) { err(`promos.js 無法執行：${e.message}`); return; }
+  if (!Array.isArray(PR)) { err('promos.js 沒有定義 PROMOS 陣列'); return; }
+  if (!/<script[^>]*src=["']promos\.js["']/.test(read('index.html'))) err('index.html 沒有載入 promos.js，促銷不會生效');
+  const pnames = new Set(P.map((x) => x.n));
+  const isDate = (s) => /^\d{4}-\d{2}-\d{2}$/.test(s) && new Date(s + 'T00:00:00Z').toISOString().slice(0, 10) === s;
+  const today = new Date().toISOString().slice(0, 10);
+  PR.forEach((r, i) => {
+    const label = `促銷 #${i + 1}${r && r.label ? `（${r.label}）` : ''}`;
+    if (!r || typeof r !== 'object') { err(`${label}：設定不是物件`); return; }
+    if (!r.label) warn(`${label}：沒有 label，圖片上的小標會顯示預設文字`);
+    if (!(isInt(r.amount) && r.amount > 0)) err(`${label}：amount 必須是大於 0 的整數元，目前是 ${JSON.stringify(r.amount)}`);
+    if (!(r.categories && r.categories.length) && !(r.items && r.items.length)) err(`${label}：categories 和 items 都沒寫，沒有任何商品會適用`);
+    (r.categories || []).forEach((c) => { if (TABS && !TABS.includes(c)) err(`${label}：categories 的 ${q(c)} 不在分頁清單裡`); });
+    (r.items || []).forEach((it) => { if (!pnames.has(it)) err(`${label}：items 的 ${q(it)} 不是現有商品名稱`); });
+    for (const f of ['start', 'end']) if (r[f] != null && !isDate(r[f])) err(`${label}：${f} 日期格式要是真實存在的 YYYY-MM-DD，目前是 ${JSON.stringify(r[f])}`);
+    if (isDate(r.start || '') && isDate(r.end || '') && r.start > r.end) err(`${label}：start（${r.start}）晚於 end（${r.end}）`);
+    if (r.title != null && typeof r.title !== 'string') err(`${label}：title 必須是文字`);
+    if (r.enabled != null && typeof r.enabled !== 'boolean') err(`${label}：enabled 必須是 true 或 false`);
+    if (r.end && isDate(r.end) && r.end < today && r.enabled !== false) warn(`${label}：已於 ${r.end} 過期，仍是啟用狀態`);
+    const matched = P.filter((x) => (r.items || []).includes(x.n) || (r.categories || []).some((c) => matchCat(x, c, d0)));
+    if (!matched.length) warn(`${label}：目前沒有任何商品符合，這組促銷不會有效果`);
+    matched.filter((x) => r.amount >= x.p).forEach((x) => warn(`${label}：折扣 ${r.amount} 元大於等於商品價格，${x.n}（NT$${x.p}）會變成 0 元`));
+    info.push(`促銷：${label}，適用 ${matched.length} 項商品`);
+  });
+}
+
 // ---------- 執行 ----------
 const info = [];
 let products;
@@ -242,6 +279,8 @@ info.push(`商品：${products.P.length} 項（來源 ${products.source}）`);
 checkProducts(products);
 checkStock(products.P);
 checkDiscounts(products.P, products.TABS);
+d0 = products;
+checkPromos(products.P, products.TABS);
 
 console.log(`資料夾：${ROOT}`);
 info.forEach((s) => console.log('· ' + s));
