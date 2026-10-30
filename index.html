@@ -69,13 +69,18 @@ button{font:inherit;cursor:pointer;border:0}
 .hint{color:var(--mute);font-size:13px;line-height:1.6;margin:12px 0 0}.close{background:none;color:var(--mute);width:100%;padding:12px;margin-top:4px}
 .toast{position:fixed;left:50%;top:calc(16px + env(safe-area-inset-top,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 18px;border-radius:999px;font-size:14px;display:none;z-index:9}
 .badge.promo{background:#d6336c;color:#fff}.badge.stk{top:auto;bottom:10px}
-.was{display:block;color:var(--mute);font-size:12px;font-weight:600;text-decoration:line-through;margin-bottom:2px}
+.was{display:flex;flex-wrap:wrap;gap:2px 8px;align-items:baseline;color:var(--mute);font-size:12px;font-weight:600;margin-bottom:2px}.was s{text-decoration:line-through}.was em{font-style:normal;color:#c2255c;font-weight:700}
+.promobar{max-width:1000px;margin:0 auto;padding:0 14px 6px}.promobar:empty{display:none}
+.promobar div{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:center;justify-content:center;background:#fff0f6;color:#c2255c;border:1px solid #fcc2d7;border-radius:14px;padding:9px 14px;font-size:14px;margin-top:6px}
+.promobar span{font-weight:600;opacity:.85}
+@media (prefers-color-scheme:dark){.was em{color:#ffa8c5}.promobar div{background:#4a1a2e;color:#ffa8c5;border-color:#7a2a47}}
 .tag{display:inline-block;background:#fff0f6;color:#c2255c;border-radius:6px;font-size:12px;font-weight:700;padding:1px 7px;margin-left:6px}
 @media (prefers-color-scheme:dark){.tag{background:#4a1a2e;color:#ffa8c5}}
 .row small{display:block;color:var(--mute);font-size:12px;margin-top:2px}.row s{color:var(--mute);font-size:13px;margin-right:6px}
 .row.disc.promo span:last-child{color:#d6336c}
 </style></head><body>
 <header><h1>美食選購</h1><p>選好數量，按「結帳」產生訂單再傳給我</p></header>
+<div class="promobar" id="promoBar"></div>
 <div class="top"><div class="search"><input id="kw" type="search" placeholder="搜尋商品名稱" autocomplete="off"></div>
 <div class="tabs" id="tabs"></div></div>
 <div class="grid" id="grid"></div>
@@ -158,8 +163,14 @@ function promoOf(x){var best=null,t=today();(typeof PROMOS!=="undefined"&&PROMOS
   if(!p||p.enabled===false)return;if(p.start&&t<p.start)return;if(p.end&&t>p.end)return;
   var hit=!!((p.categories&&p.categories.some(function(c){return inCat(x,c)}))||(p.items&&p.items.indexOf(x.n)>-1));if(!hit)return;
   var a=Math.min(Math.max(0,Math.round(Number(p.amount)||0)),x.p);
-  if(a>0&&(!best||a>best.amt))best={amt:a,label:p.label||("每件折"+a)}});return best}
+  if(a>0&&(!best||a>best.amt))best={amt:a,label:p.label||("每件折"+a),start:p.start,end:p.end}});return best}
 function unit(x){var o=promoOf(x);return x.p-(o?o.amt:0)}
+function md(s){var m=/^\d{4}-(\d\d)-(\d\d)$/.exec(s||"");return m?(+m[1])+"/"+(+m[2]):""}
+function rng(o){var a=md(o.start),b=md(o.end);return a&&b?a+"–"+b:b?"至 "+b:a?a+" 起":""}
+function bar(){var t=today(),h="";(typeof PROMOS!=="undefined"&&PROMOS?PROMOS:[]).forEach(function(p){
+  if(!p||p.enabled===false||(p.start&&t<p.start)||(p.end&&t>p.end))return;
+  var sc=[].concat(p.categories||[],(p.items&&p.items.length)?[p.items.length+" 項商品"]:[]).join("、"),ttl=p.title||(sc+" "+(p.label||"")),r=rng(p);
+  h+='<div>🏷️ <b>'+ttl+'</b>'+(r?'<span>'+r+'</span>':'')+'</div>'});return h}
 function eligible(rule){
   var scoped=(rule.categories&&rule.categories.length)||(rule.items&&rule.items.length),s=0;
   P.forEach(function(x){var q=C[x.id]||0;if(!q)return;var ok=true;
@@ -167,8 +178,8 @@ function eligible(rule){
     if(ok)s+=q*unit(x)});
   return s}
 function calc(){
-  var sub=0,pr=0,pn=0,lb=[];P.forEach(function(x){var q=C[x.id]||0;if(!q)return;sub+=q*x.p;var o=promoOf(x);if(o){pr+=q*o.amt;pn+=q;if(lb.indexOf(o.label)<0)lb.push(o.label)}});
-  var r={sub:sub,promo:pr,pn:pn,plabel:lb.join("、"),net:sub-pr,off:0,code:"",msg:"",ok:false};
+  var sub=0,pr=0,pn=0,lb=[],lf=[];P.forEach(function(x){var q=C[x.id]||0;if(!q)return;sub+=q*x.p;var o=promoOf(x);if(o){pr+=q*o.amt;pn+=q;if(lb.indexOf(o.label)<0)lb.push(o.label);var f=o.label+(rng(o)?"，"+rng(o):"");if(lf.indexOf(f)<0)lf.push(f)}});
+  var r={sub:sub,promo:pr,pn:pn,plabel:lb.join("、"),plabelF:lf.join("；"),net:sub-pr,off:0,code:"",msg:"",ok:false};
   if(!applied)return r;
   var rule=findRule(applied);r.code=DKEY[applied]||applied;
   if(!rule||rule.enabled===false){r.msg="這組折扣碼目前無法使用";return r}
@@ -187,10 +198,11 @@ var ORD=[0,1,2,3,14,15,26,7,6,28,8,9,4,5,29,30,31,16,17,18,19,23,24,11,22,25,12,
 P.sort(function(a,b){var x=ORD.indexOf(a.id),y=ORD.indexOf(b.id);return (x<0?999:x)-(y<0?999:y)});
 function $(s){return document.getElementById(s)}
 function draw(){
+  $("promoBar").innerHTML=bar();
   P.forEach(function(x){var st=stockOf(x);if(st!==Infinity&&(C[x.id]||0)>st)C[x.id]=st});
   $("tabs").innerHTML=TABS.map(function(t){return '<button data-cat="'+t+'"'+(t===cat?' class="on"':'')+'>'+t+'<i>'+P.filter(function(x){return inCat(x,t)}).length+'</i></button>'}).join("");
   $("grid").innerHTML=P.filter(function(x){return inCat(x,cat)&&x.n.toLowerCase().indexOf(kw)>-1}).sort(function(a,b){return (stockOf(a)<=0)-(stockOf(b)<=0)}).map(function(x){var q=C[x.id]||0,st=stockOf(x),out=st<=0,pm=out?null:promoOf(x),sb=out?'已售完':(st<=5?'只剩 '+st+' 件':''),badge=(sb?'<span class="badge'+(out?'':' low')+(pm?' stk':'')+'">'+sb+'</span>':'')+(pm?'<span class="badge promo">'+pm.label+'</span>':'');
-    return '<div class="card'+(q?' on':'')+(out?' out':'')+'"><div class="imgwrap"><img src="'+x.i+'" alt="'+x.n+'" decoding="async">'+badge+'</div><div class="info"><div class="name">'+x.n+'</div><div class="price">'+(pm?'<span class="was">NT$ '+x.p+'</span>':'')+'<small>NT$</small>'+(x.p-(pm?pm.amt:0))+'</div>'+
+    return '<div class="card'+(q?' on':'')+(out?' out':'')+'"><div class="imgwrap"><img src="'+x.i+'" alt="'+x.n+'" decoding="async">'+badge+'</div><div class="info"><div class="name">'+x.n+'</div><div class="price">'+(pm?'<span class="was"><s>NT$ '+x.p+'</s>'+(rng(pm)?'<em>'+rng(pm)+'</em>':'')+'</span>':'')+'<small>NT$</small>'+(x.p-(pm?pm.amt:0))+'</div>'+
     (out?'<button class="add" disabled>已售完</button>':q?'<div class="qty"><button data-d="-1" data-id="'+x.id+'">−</button><span>'+q+'</span><button data-d="1" data-id="'+x.id+'"'+(q>=st?' disabled':'')+'>+</button></div>'
       :'<button class="add" data-d="1" data-id="'+x.id+'">加入購物車</button>')+'</div></div>'}).join("")||'<div class="empty">找不到符合的商品</div>';
   var n=0,s=0;P.forEach(function(x){var q=C[x.id]||0;n+=q;s+=q*unit(x)});
@@ -200,7 +212,7 @@ function text(){
   P.forEach(function(x){var q=C[x.id]||0;if(!q)return;var o=promoOf(x);
     t+=x.n+" ×"+q+"　NT$"+(q*(x.p-(o?o.amt:0)))+(o?"（原價 "+(q*x.p)+"，促銷 −"+(q*o.amt)+"）":"")+"\n"});
   var r=calc();
-  if(r.promo>0)t+="小計（原價）：NT$"+r.sub+"\n促銷折扣（"+r.plabel+"）：−NT$"+r.promo+"\n";
+  if(r.promo>0)t+="小計（原價）：NT$"+r.sub+"\n促銷折扣（"+r.plabelF+"）：−NT$"+r.promo+"\n";
   else if(r.ok)t+="小計：NT$"+r.sub+"\n";
   if(r.ok)t+="折扣碼："+r.code+"（−NT$"+r.off+"）\n";
   t+=((r.ok||r.promo>0)?"應付金額：NT$":"合計：NT$")+(r.net-r.off)+"\n";
@@ -210,7 +222,7 @@ function text(){
 function sheet(){
   $("lines").innerHTML=P.filter(function(x){return C[x.id]}).map(function(x){var q=C[x.id],o=promoOf(x);
     if(!o)return '<div class="row"><span>'+x.n+' ×'+q+'</span><span>NT$'+q*x.p+'</span></div>';
-    return '<div class="row"><span>'+x.n+' ×'+q+'<span class="tag">'+o.label+'</span><small>NT$'+x.p+' → NT$'+(x.p-o.amt)+'，共省 NT$'+q*o.amt+'</small></span><span><s>NT$'+q*x.p+'</s>NT$'+q*(x.p-o.amt)+'</span></div>'}).join("");
+    return '<div class="row"><span>'+x.n+' ×'+q+'<span class="tag">'+o.label+'</span><small>NT$'+x.p+' → NT$'+(x.p-o.amt)+'，共省 NT$'+q*o.amt+(rng(o)?'（優惠 '+rng(o)+'）':'')+'</small></span><span><s>NT$'+q*x.p+'</s>NT$'+q*(x.p-o.amt)+'</span></div>'}).join("");
   var r=calc(),hp=r.promo>0;
   $("sub").textContent="NT$"+r.sub;$("subLabel").textContent=hp?"小計（原價）":"小計";$("subRow").style.display=(hp||r.ok)?"flex":"none";
   $("promoRow").style.display=hp?"flex":"none";$("promoLabel").textContent="促銷折扣（"+r.plabel+"，共 "+r.pn+" 件）";$("promoAmt").textContent="−NT$"+r.promo;
