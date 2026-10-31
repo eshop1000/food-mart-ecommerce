@@ -163,14 +163,14 @@ function promoOf(x){var best=null,t=today();(typeof PROMOS!=="undefined"&&PROMOS
   if(!p||p.enabled===false)return;if(p.start&&t<p.start)return;if(p.end&&t>p.end)return;
   var hit=!!((p.categories&&p.categories.some(function(c){return inCat(x,c)}))||(p.items&&p.items.indexOf(x.n)>-1));if(!hit)return;
   var a=Math.min(Math.max(0,Math.round(Number(p.amount)||0)),x.p);
-  if(a>0&&(!best||a>best.amt))best={amt:a,label:p.label||("每件折"+a),start:p.start,end:p.end}});return best}
+  if(a>0&&(!best||a>best.amt))best={amt:a,label:p.label||("每件折"+a),start:p.start,end:p.end,period:p.period}});return best}
 function unit(x){var o=promoOf(x);return x.p-(o?o.amt:0)}
 function md(s){var m=/^\d{4}-(\d\d)-(\d\d)$/.exec(s||"");return m?(+m[1])+"/"+(+m[2]):""}
 function rng(o){var a=md(o.start),b=md(o.end);return a&&b?a+"–"+b:b?"至 "+b:a?a+" 起":""}
 function bar(){var t=today(),h="";(typeof PROMOS!=="undefined"&&PROMOS?PROMOS:[]).forEach(function(p){
   if(!p||p.enabled===false||(p.start&&t<p.start)||(p.end&&t>p.end))return;
   var sc=[].concat(p.categories||[],(p.items&&p.items.length)?[p.items.length+" 項商品"]:[]).join("、"),ttl=p.title||(sc+" "+(p.label||"")),r=rng(p);
-  h+='<div>🏷️ <b>'+ttl+'</b>'+(r?'<span>特價期間：'+r+'</span>':'')+'</div>'});return h}
+  h+='<div>🏷️ <b>'+ttl+'</b>'+(r?'<span>'+(p.period?p.period+' ':'')+'特價期間：'+r+'</span>':'')+'</div>'});return h}
 function eligible(rule){
   var scoped=(rule.categories&&rule.categories.length)||(rule.items&&rule.items.length),s=0;
   P.forEach(function(x){var q=C[x.id]||0;if(!q)return;var ok=true;
@@ -178,7 +178,7 @@ function eligible(rule){
     if(ok)s+=q*unit(x)});
   return s}
 function calc(){
-  var sub=0,pr=0,pn=0,lb=[],lf=[];P.forEach(function(x){var q=C[x.id]||0;if(!q)return;sub+=q*x.p;var o=promoOf(x);if(o){pr+=q*o.amt;pn+=q;if(lb.indexOf(o.label)<0)lb.push(o.label);var f=o.label+(rng(o)?"，特價期間："+rng(o):"");if(lf.indexOf(f)<0)lf.push(f)}});
+  var sub=0,pr=0,pn=0,lb=[],lf=[];P.forEach(function(x){var q=C[x.id]||0;if(!q)return;sub+=q*x.p;var o=promoOf(x);if(o){pr+=q*o.amt;pn+=q;if(lb.indexOf(o.label)<0)lb.push(o.label);var f=o.label+(rng(o)?"，"+(o.period?o.period+" ":"")+"特價期間："+rng(o):"");if(lf.indexOf(f)<0)lf.push(f)}});
   var r={sub:sub,promo:pr,pn:pn,plabel:lb.join("、"),plabelF:lf.join("；"),net:sub-pr,off:0,code:"",msg:"",ok:false};
   if(!applied)return r;
   var rule=findRule(applied);r.code=DKEY[applied]||applied;
