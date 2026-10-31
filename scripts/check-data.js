@@ -262,6 +262,7 @@ function checkPromos(P, TABS) {
     for (const f of ['start', 'end']) if (r[f] != null && !isDate(r[f])) err(`${label}：${f} 日期格式要是真實存在的 YYYY-MM-DD，目前是 ${JSON.stringify(r[f])}`);
     if (isDate(r.start || '') && isDate(r.end || '') && r.start > r.end) err(`${label}：start（${r.start}）晚於 end（${r.end}）`);
     if (r.title != null && typeof r.title !== 'string') err(`${label}：title 必須是文字`);
+    if (r.period != null && typeof r.period !== 'string') err(`${label}：period 必須是文字`);
     if (r.enabled != null && typeof r.enabled !== 'boolean') err(`${label}：enabled 必須是 true 或 false`);
     if (r.end && isDate(r.end) && r.end < today && r.enabled !== false) warn(`${label}：已於 ${r.end} 過期，仍是啟用狀態`);
     const matched = P.filter((x) => (r.items || []).includes(x.n) || (r.categories || []).some((c) => matchCat(x, c, d0)));
