@@ -60,6 +60,7 @@ const q = (s) => JSON.stringify(s);
 // ---------- 載入商品資料 ----------
 function loadProducts() {
   if (exists('products.js')) {
+    if (!/<script[^>]*src=["']products\.js["']/.test(read('index.html'))) err('index.html 沒有載入 products.js，網站會是空的');
     const v = runVarsFile('products.js', ['P', 'CAT', 'ORD', 'TABS', 'ALSO']);
     return { ...v, source: 'products.js' };
   }
@@ -230,6 +231,7 @@ function checkDiscounts(P, TABS) {
   }
   info.push(`折扣碼：${n} 組`);
   // 不該公開的檔案
+  if (exists('admin.html')) warn('admin.html 在公開倉庫裡，任何人都打得開（不含你的資料，但這是管理用的小工具，建議不要上傳）');
   for (const f of ['code-tool.html', 'codes.txt', '折扣碼.txt', '折扣碼明碼.txt'])
     if (exists(f)) err(`不應放進公開倉庫的檔案：${f}（內含或可產生折扣碼明碼）`);
 }
@@ -272,6 +274,47 @@ function checkPromos(P, TABS) {
   });
 }
 
+
+// ---------- 檢查：首頁橫幅 ----------
+function checkHero(P, TABS) {
+  if (!exists('hero.js')) return;
+  let H;
+  try { H = runVarsFile('hero.js', ['HERO']).HERO; } catch (e) { err(`hero.js 無法執行：${e.message}`); return; }
+  if (!Array.isArray(H)) { err('hero.js 沒有定義 HERO 陣列'); return; }
+  const html = read('index.html');
+  if (!/<script[^>]*src=["']hero\.js["']/.test(html)) err('index.html 沒有載入 hero.js，橫幅不會顯示');
+  const pnames = new Set(P.map((x) => x.n));
+  const isDate = (s) => /^\d{4}-\d{2}-\d{2}$/.test(s) && new Date(s + 'T00:00:00Z').toISOString().slice(0, 10) === s;
+  const today = new Date().toISOString().slice(0, 10);
+  let active = 0;
+  H.forEach((r, i) => {
+    const label = `橫幅 #${i + 1}${r && r.title ? `（${r.title}）` : ''}`;
+    if (!r || typeof r !== 'object') { err(`${label}：設定不是物件`); return; }
+    if (!r.title) err(`${label}：沒有 title 大標題`);
+    if (r.item && !pnames.has(r.item)) err(`${label}：item 的 ${q(r.item)} 不是現有商品名稱`);
+    if (r.cat && TABS && !TABS.includes(r.cat)) err(`${label}：cat 的 ${q(r.cat)} 不在分頁清單裡`);
+    if (r.img && !/^https?:/.test(r.img) && !exists(r.img)) err(`${label}：img 圖片檔案不存在：${r.img}`);
+    if (r.color && !/^#[0-9a-fA-F]{3}([0-9a-fA-F]{3})?$/.test(r.color)) err(`${label}：color 要是 #e8590c 這種顏色碼`);
+    for (const f of ['start', 'end']) if (r[f] != null && !isDate(r[f])) err(`${label}：${f} 日期格式要是真實存在的 YYYY-MM-DD，目前是 ${JSON.stringify(r[f])}`);
+    if (isDate(r.start || '') && isDate(r.end || '') && r.start > r.end) err(`${label}：start（${r.start}）晚於 end（${r.end}）`);
+    if (r.enabled != null && typeof r.enabled !== 'boolean') err(`${label}：enabled 必須是 true 或 false`);
+    const live = r.enabled !== false && (!r.start || today >= r.start) && (!r.end || today <= r.end);
+    if (live) active++;
+  });
+  info.push(`首頁橫幅：${H.length} 張，目前顯示 ${active} 張`);
+}
+
+// ---------- 檢查：圖片資料夾 ----------
+function checkImageDir(P) {
+  if (!exists('images') || !fs.statSync(path.join(ROOT, 'images')).isDirectory()) return;
+  const used = new Set(P.map((x) => x.i));
+  if (exists('hero.js')) { try { (runVarsFile('hero.js', ['HERO']).HERO || []).forEach((r) => r && r.img && used.add(r.img)); } catch (e) { /* 已在 checkHero 回報 */ } }
+  const files = fs.readdirSync(path.join(ROOT, 'images')).filter((f) => !f.startsWith('.'));
+  files.forEach((f) => { if (!used.has('images/' + f)) warn(`images/${f} 沒有被任何商品使用（可以刪除）`); });
+  files.forEach((f) => { if (/[A-Z\s]/.test(f)) warn(`images/${f} 檔名有大寫或空白，GitHub Pages 區分大小寫，容易載入失敗`); });
+  info.push(`圖片：images 資料夾 ${files.length} 個檔案`);
+}
+
 // ---------- 執行 ----------
 const info = [];
 let products;
@@ -282,6 +325,8 @@ checkStock(products.P);
 checkDiscounts(products.P, products.TABS);
 d0 = products;
 checkPromos(products.P, products.TABS);
+checkHero(products.P, products.TABS);
+checkImageDir(products.P);
 
 console.log(`資料夾：${ROOT}`);
 info.forEach((s) => console.log('· ' + s));
