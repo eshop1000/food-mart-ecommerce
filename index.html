@@ -110,6 +110,7 @@ button{font:inherit;cursor:pointer;border:0}
 .hb{background:#fff;color:var(--hc,#e8590c);border:0;border-radius:999px;padding:9px 18px;font-weight:800;font-size:14px}
 .hi{flex:0 0 auto}.hi img{display:block;width:124px;height:124px;border-radius:18px;object-fit:cover;box-shadow:0 8px 22px rgba(0,0,0,.28);transform:rotate(3deg)}
 @media (min-width:700px){.hs{min-height:190px;padding:24px 30px}.ht h2{font-size:34px}.hi img{width:164px;height:164px}}
+@media (min-width:700px){.hero.multi .hs{flex-basis:calc(50% - 5px)}.hero:not(.multi) .hs{justify-content:center;gap:56px}}
 .card.flash{animation:cflash 1.4s}@keyframes cflash{0%,60%{box-shadow:0 0 0 4px var(--accent)}100%{box-shadow:none}}
 </style></head><body>
 <header><h1>美食選購</h1><p>選好數量，按「結帳」產生訂單再傳給我</p></header>
@@ -145,6 +146,7 @@ button{font:inherit;cursor:pointer;border:0}
 <script src="products.js" charset="utf-8"></script>
 <script src="hero.js" charset="utf-8"></script>
 <script>
+if(typeof P==="undefined"){document.body.innerHTML='<div style="padding:48px 20px;text-align:center;font:16px/1.8 sans-serif;color:#7a5a00">商品資料載入失敗。<br>請按 Ctrl+F5 重新整理；如果還是這樣，請確認 products.js、hero.js 和 images 資料夾都已上傳到 GitHub。</div>';throw new Error("products.js 未載入")}
 var C={};
 var cat="全部",kw="";
 var SHA_K=[],SHA_H=[];
