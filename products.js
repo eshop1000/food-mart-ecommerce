@@ -44,7 +44,7 @@ var P = [
   {id:34, n:"太珍香-小農夯烤地瓜450/盒", p:140, i:"images/p34-06fba0.webp"},
   {id:35, n:"Airwaves口香糖-薄荷口味28g/包", p:30, i:"images/p35-7f7e2c.webp"},
   {id:36, n:"所長-茶葉蛋2入/包", p:45, i:"images/p36-05817d.webp"},
-  {id:37, n:"大苑子-六顆柳丁汁 250mL", p:70, i:"images/p37-b2dc02.webp"}
+  {id:37, n:"大苑子-六顆柳丁汁 250mL", p:65, i:"images/p37-b2dc02.webp"}
 ];
 var CAT = {
   0:"水餃",
