@@ -45,11 +45,11 @@ var P = [
   {id:35, n:"Airwaves口香糖-薄荷口味28g/包", p:30, i:"images/p35-7f7e2c.webp"},
   {id:36, n:"所長-茶葉蛋2入/包", p:45, i:"images/p36-05817d.webp"},
   {id:37, n:"大苑子-六顆柳丁汁 250mL", p:65, i:"images/p37-b2dc02.webp"},
-  {id:38, n:"eclipse-沁香葡萄口味", p:50, i:"images/p38-a22b48.webp"},
-  {id:39, n:"eclipse-沁新檸檬口味", p:50, i:"images/p39-059118.webp"},
-  {id:40, n:"eclipse-勁爽薄荷口味", p:50, i:"images/p40-ea083f.webp"},
-  {id:41, n:"eclipse-清爽蜜桃口味", p:50, i:"images/p41-991647.webp"},
-  {id:42, n:"eclipse-繽紛野莓口味", p:50, i:"images/p42-198131.webp"}
+  {id:38, n:"eclipse-沁香葡萄口味", p:50, i:"images/p38-3e093b.webp"},
+  {id:39, n:"eclipse-沁新檸檬口味", p:50, i:"images/p39-986d9e.webp"},
+  {id:40, n:"eclipse-勁爽薄荷口味", p:50, i:"images/p40-a861d1.webp"},
+  {id:41, n:"eclipse-清爽蜜桃口味", p:50, i:"images/p41-cd5a82.webp"},
+  {id:42, n:"eclipse-繽紛野莓口味", p:50, i:"images/p42-87889d.webp"}
 ];
 var CAT = {
   0:"水餃",
