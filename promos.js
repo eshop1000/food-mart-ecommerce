@@ -27,5 +27,5 @@
 var PROMOS = [
   { title: "水餃每包折 5 元", period: "慶祝雙11", label: "每包折 5", amount: 5, categories: ["水餃"], start: "2026-10-30", end: "2026-11-11" },
   { title: "好喝上架 六顆柳丁汁折 5 元", label: "好喝上架 折5", amount: 5, items: ["大苑子-六顆柳丁汁 250mL"], start: "2026-11-04", end: "2026-11-11" },
-  { title: "科克蘭 產品上架", label: "每件折 10", amount: 10, categories: ["冷凍"], start: "2026-11-05", end: "2026-11-15" }
+  { title: "科克蘭 產品上架", label: "每件折 10", amount: 10, categories: ["冷凍"], items: ["科克蘭-超特大生蝦仁(680公克/包)"], start: "2026-11-05", end: "2026-11-15" }
 ];
