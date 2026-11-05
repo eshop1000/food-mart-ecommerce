@@ -50,7 +50,7 @@ var P = [
   {id:40, n:"eclipse-勁爽薄荷口味", p:50, i:"images/p40-b108ae.webp"},
   {id:41, n:"eclipse-清爽蜜桃口味", p:50, i:"images/p41-7e2cad.webp"},
   {id:42, n:"eclipse-繽紛野莓口味", p:50, i:"images/p42-5f14a8.webp"},
-  {id:43, n:"科克蘭-超特大生蝦仁(680公克/包)", p:600, i:"images/p43-35f2b6.webp"}
+  {id:43, n:"科克蘭-超特大生蝦仁(680公克/包)", p:600, i:"images/p43-ba67a5.webp"}
 ];
 var CAT = {
   0:"水餃",
