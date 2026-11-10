@@ -111,13 +111,29 @@ button{font:inherit;cursor:pointer;border:0}
 .hi{flex:0 0 auto}.hi img{display:block;width:124px;height:124px;border-radius:18px;object-fit:cover;box-shadow:0 8px 22px rgba(0,0,0,.28);transform:rotate(3deg)}
 @media (min-width:700px){.hs{min-height:190px;padding:24px 30px}.ht h2{font-size:34px}.hi img{width:164px;height:164px}}
 @media (min-width:700px){.hero.multi .hs{flex-basis:calc(50% - 5px)}.hero:not(.multi) .hs{justify-content:center;gap:56px}}
+@media (min-width:700px){.tabwrap .tabs{flex-wrap:wrap;overflow:visible;-webkit-mask-image:none!important;mask-image:none!important}.tabwrap .tnav{display:none!important}}
+.hero{display:block;overflow:visible;scroll-snap-type:none}.hero .hs{flex:none}
+.hmini{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.hm{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--card);color:var(--ink);font:inherit;border:1px solid var(--line);border-left:4px solid var(--hc,var(--accent));border-radius:16px;padding:10px 14px;cursor:pointer}
+.hm img{width:56px;height:56px;border-radius:12px;object-fit:cover;flex:none}.hm .t{min-width:0;flex:1}.hm .t b{display:block;font-size:15px}
+.hm .t>span{display:block;color:var(--mute);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.hm i{font-style:normal;color:var(--hc,var(--accent));font-size:24px;line-height:1}
+@media (max-width:520px){.hmini{grid-template-columns:1fr}}
+.promobar{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}.promobar div{border-radius:999px;padding:5px 14px;font-size:13px;margin-top:0}
+.drawer .promobar{display:block}.drawer .promobar div{border-radius:12px;margin-top:6px}
 .card.flash{animation:cflash 1.4s}@keyframes cflash{0%,60%{box-shadow:0 0 0 4px var(--accent)}100%{box-shadow:none}}
+.tabwrap{position:relative;max-width:1000px;margin:10px auto 0}.tabwrap .tabs{margin:0;max-width:none}
+.tnav{position:absolute;top:50%;transform:translateY(-50%);width:30px;height:30px;border-radius:50%;background:var(--card);color:var(--ink);border:1px solid var(--line);box-shadow:var(--shadow);display:none;z-index:2;font-size:20px;line-height:1;padding:0;cursor:pointer}
+.tnav.l{left:2px}.tnav.r{right:2px}.tabwrap.hl .tnav.l,.tabwrap.hr .tnav.r{display:block}
+.tabwrap.hr .tabs{-webkit-mask-image:linear-gradient(to right,#000 calc(100% - 44px),transparent);mask-image:linear-gradient(to right,#000 calc(100% - 44px),transparent)}
+.tabwrap.hl .tabs{-webkit-mask-image:linear-gradient(to right,transparent,#000 44px);mask-image:linear-gradient(to right,transparent,#000 44px)}
+.tabwrap.hl.hr .tabs{-webkit-mask-image:linear-gradient(to right,transparent,#000 44px,#000 calc(100% - 44px),transparent);mask-image:linear-gradient(to right,transparent,#000 44px,#000 calc(100% - 44px),transparent)}
+@media (hover:none){.tnav{display:none!important}}
 </style></head><body>
 <header><h1>美食選購</h1><p>選好數量，按「結帳」產生訂單再傳給我</p></header>
 <div class="hero" id="hero"></div>
 <div class="promobar" id="promoBar"></div>
 <div class="top"><div class="search"><input id="kw" type="search" placeholder="搜尋商品名稱" autocomplete="off"></div>
-<div class="tabs" id="tabs"></div></div>
+<div class="tabwrap" id="tabwrap"><button type="button" class="tnav l" id="tl" aria-label="往左看更多分類">‹</button><div class="tabs" id="tabs"></div><button type="button" class="tnav r" id="tr" aria-label="往右看更多分類">›</button></div></div>
 <div class="grid" id="grid"></div>
 <div class="bar" id="cbar"><button class="peek" id="peek" type="button" disabled>🛒 共 <span id="cnt">0</span> 件　<b id="sum">NT$0</b><i>查看購物車 ›</i></button><button class="go" id="open" disabled>結帳</button></div>
 <div class="dmask" id="dmask"></div>
@@ -216,9 +232,11 @@ function inCat(x,t){return t==="全部"||CAT[x.id]===t||(t==="王品"&&x.n.index
 P.sort(function(a,b){var x=ORD.indexOf(a.id),y=ORD.indexOf(b.id);return (x<0?999:x)-(y<0?999:y)});
 function $(s){return document.getElementById(s)}
 function heroHtml(){var t=today(),L=(typeof HERO!=="undefined"&&HERO?HERO:[]).filter(function(s){return s&&s.enabled!==false&&(!s.start||t>=s.start)&&(!s.end||t<=s.end)});
-  $("hero").className="hero"+(L.length>1?" multi":"");HEROL=L;
-  return L.map(function(s,i){var x=s.item&&P.filter(function(p){return p.n===s.item})[0],im=s.img||(x&&x.i)||"";
-    return '<div class="hs" style="--hc:'+(s.color||"#e8590c")+'"><div class="ht">'+(s.note?'<small>'+s.note+'</small>':'')+'<h2>'+s.title+'</h2>'+(s.sub?'<p>'+s.sub+'</p>':'')+'<button type="button" class="hb" data-hero="'+i+'">'+(s.btn||"立即選購")+'</button></div>'+(im?'<div class="hi"><img src="'+im+'" alt="" decoding="async"></div>':'')+'</div>'}).join("")}
+  $("hero").className="hero";HEROL=L;if(!L.length)return"";
+  var img=function(s){var x=s.item&&P.filter(function(p){return p.n===s.item})[0];return s.img||(x&&x.i)||""};
+  var s=L[0],im=img(s),h='<div class="hs" style="--hc:'+(s.color||"#e8590c")+'"><div class="ht">'+(s.note?'<small>'+s.note+'</small>':'')+'<h2>'+s.title+'</h2>'+(s.sub?'<p>'+s.sub+'</p>':'')+'<button type="button" class="hb" data-hero="0">'+(s.btn||"立即選購")+'</button></div>'+(im?'<div class="hi"><img src="'+im+'" alt="" decoding="async"></div>':'')+'</div>';
+  if(L.length>1)h+='<div class="hmini">'+L.slice(1).map(function(m,k){var i2=img(m);return'<button type="button" class="hm" data-hero="'+(k+1)+'" style="--hc:'+(m.color||"#e8590c")+'">'+(i2?'<img src="'+i2+'" alt="" decoding="async">':'')+'<span class="t"><b>'+m.title+'</b>'+((m.sub||m.note)?'<span>'+(m.sub||m.note)+'</span>':'')+'</span><i>›</i></button>'}).join("")+'</div>';
+  return h}
 var HEROL=[];
 function heroGo(i){var s=HEROL[i];if(!s)return;var x=s.item&&P.filter(function(p){return p.n===s.item})[0],c=s.cat||(x&&CAT[x.id])||"全部";
   cat=TABS.indexOf(c)>-1?c:"全部";kw="";$("kw").value="";draw();
@@ -234,8 +252,10 @@ function draw(){
     (out?'<button class="add" disabled>已售完</button>':q?'<div class="qty"><button data-d="-1" data-id="'+x.id+'">−</button><span>'+q+'</span><button data-d="1" data-id="'+x.id+'"'+(q>=st?' disabled':'')+'>+</button></div>'
       :'<button class="add" data-d="1" data-id="'+x.id+'">加入購物車</button>')+'</div></div>'}).join("")||'<div class="empty">找不到符合的商品</div>';
   var n=0,s=0;P.forEach(function(x){var q=C[x.id]||0;n+=q;s+=q*unit(x)});
-  $("cnt").textContent=n;$("sum").textContent="NT$"+s;$("open").disabled=!n;$("peek").disabled=!n;pop(n);drawerRender(n);return s}
-var dOpen=false,lastN=0;
+  $("cnt").textContent=n;$("sum").textContent="NT$"+s;$("open").disabled=!n;$("peek").disabled=!n;pop(n);drawerRender(n);tabEdges(true);return s}
+var dOpen=false,lastN=0,lastCat=null;
+function tabEdges(chk){var t=$("tabs"),w=$("tabwrap");if(chk&&lastCat!==cat){lastCat=cat;var on=t.querySelector("button.on");if(on){var l=on.offsetLeft,r=l+on.offsetWidth;if(l<t.scrollLeft+40||r>t.scrollLeft+t.clientWidth-40)t.scrollLeft=Math.max(0,l-t.clientWidth/2+on.offsetWidth/2)}}
+  if(t.scrollLeft>4)w.classList.add("hl");else w.classList.remove("hl");if(t.scrollLeft+t.clientWidth<t.scrollWidth-4)w.classList.add("hr");else w.classList.remove("hr")}
 function drawerOpen(on){dOpen=on;if(on){$("drawer").classList.add("on");$("dmask").classList.add("on")}else{$("drawer").classList.remove("on");$("dmask").classList.remove("on")}
   $("drawer").setAttribute("aria-hidden",on?"false":"true");document.body.style.overflow=on?"hidden":""}
 function pop(n){if(n>lastN){var b=$("cbar");b.classList.remove("pop");void b.offsetWidth;b.classList.add("pop")}lastN=n}
@@ -281,6 +301,8 @@ document.addEventListener("click",function(e){var t=e.target.closest("button[dat
 $("kw").oninput=function(){kw=this.value.trim().toLowerCase();draw()};
 $("open").onclick=function(){sheet();$("mask").classList.add("on")};
 $("peek").onclick=function(){drawerOpen(true)};
+$("tabs").addEventListener("scroll",function(){tabEdges()});window.addEventListener("resize",function(){tabEdges()});
+$("tl").onclick=function(){$("tabs").scrollBy({left:-$("tabs").clientWidth*0.7,behavior:"smooth"})};$("tr").onclick=function(){$("tabs").scrollBy({left:$("tabs").clientWidth*0.7,behavior:"smooth"})};
 $("dclose").onclick=$("dcont").onclick=$("dmask").onclick=function(){drawerOpen(false)};
 $("dgo").onclick=function(){drawerOpen(false);sheet();$("mask").classList.add("on")};
 document.addEventListener("keydown",function(e){if(e.key==="Escape"&&dOpen)drawerOpen(false)});
